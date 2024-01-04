@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:eduflex/auth/auth_gete.dart';
 import 'package:eduflex/service/dbservice.dart';
 import 'package:eduflex/service/schema/user.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:path/path.dart';
 
 class MyProvider {
   static Future<User?> user() async {
@@ -26,7 +30,8 @@ class MyProvider {
     await prefs.remove('user');
   }
 
-  static String server = 'http://192.168.12.1:8000/';
+  static String server = 'http://192.168.12.1:8000';
+  static String wsserver = 'ws://192.168.12.1:8000';
 
   static Future<void> singin(
       String email, String password, BuildContext context) async {
@@ -35,7 +40,7 @@ class MyProvider {
     try {
       // Make a GET request to a URL
       Response response =
-          await dio.post('${server}api/loginstudent/', data: data);
+          await dio.post('${server}/api/loginstudent/', data: data);
       print(response.data);
       await MyProvider.setUser(User.fromMap(response.data));
       User? user = await MyProvider.user();
@@ -64,6 +69,16 @@ class MyProvider {
         dBservice.insertQue(rec);
       }
     }
+  }
+
+  static Future<Map<String, dynamic>> getusename(String name) async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res = await dio.get('${server}/api/getusername?name=${name}');
+
+    Map<String, dynamic> data = res.data;
+
+    return data;
   }
 
   static Future<List<dynamic>> getClassRoom() async {
@@ -145,7 +160,20 @@ class MyProvider {
     User? _user = await user();
     Dio dio = Dio();
     Response res =
-        await dio.get('${server}api/student/${_user!.id}?email=$email');
+        await dio.get('${server}/api/student/${_user!.id}?email=$email');
+
+    // List<dynamic> data = {'dl':2};
+    print(res.data);
+    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
+
+    return res.data;
+  }
+
+  static Future<Map<String, dynamic>> getSignedUser() async {
+    User? _user = await user();
+    Dio dio = Dio();
+    print("object");
+    Response res = await dio.get('${server}/api/getstudent/${_user!.id}');
 
     // List<dynamic> data = {'dl':2};
     print(res.data);
@@ -157,7 +185,7 @@ class MyProvider {
   static Future<List<dynamic>> getFriend() async {
     User? _user = await user();
     Dio dio = Dio();
-    Response res = await dio.get('${server}api/friend/${_user!.id}');
+    Response res = await dio.get('${server}/api/friend/${_user!.id}');
 
     // List<dynamic> data = {'dl':2};
     print(res.data);
@@ -169,7 +197,7 @@ class MyProvider {
   static Future<List<dynamic>> getMessage(String roomid) async {
     User? _user = await user();
     Dio dio = Dio();
-    Response res = await dio.get('${server}api/message/$roomid');
+    Response res = await dio.get('${server}/api/message/$roomid');
 
     // List<dynamic> data = {'dl':2};
     print(res.data);
@@ -186,7 +214,7 @@ class MyProvider {
     };
     try {
       Response res =
-          await dio.post('${server}api/friend/${_user!.id}', data: data);
+          await dio.post('${server}/api/friend/${_user!.id}', data: data);
       print(res.data);
     } catch (e) {
       print(e);
@@ -196,7 +224,7 @@ class MyProvider {
   static Future<List<dynamic>> getStartedChat() async {
     User? _user = await user();
     Dio dio = Dio();
-    Response res = await dio.get('${server}api/mymessage/${_user!.id}');
+    Response res = await dio.get('${server}/api/mymessage/${_user!.id}');
 
     // List<dynamic> data = {'dl':2};
     print(res.data);
@@ -216,11 +244,50 @@ class MyProvider {
     };
     try {
       Response res =
-          await dio.post('${server}api/mymessage/${_user!.id}', data: data);
+          await dio.post('${server}/api/mymessage/${_user!.id}', data: data);
       return ids.join();
     } catch (e) {
       print(e);
       return 'n';
     }
+  }
+
+  static Future<void> setProfilePic(String filePath) async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Map<String, dynamic> data = await getSignedUser();
+
+    data['avatar'] =
+        await MultipartFile.fromFile(filePath, filename: basename(filePath));
+    print(data);
+    FormData formData = FormData.fromMap(data);
+    try {
+      Response res =
+          await dio.put('${server}/api/student/${_user!.id}', data: formData);
+      print(res.data);
+    } catch (e) {
+      print("Error $e");
+    }
+  }
+
+  static Future<File?> getImage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final value = prefs.getString('profilepic') ?? '';
+    print(value);
+    if (value == '') return null;
+    return File(value);
+  }
+
+  static Future<void> setActiveStatus(bool status) async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res = await dio
+        .post('${server}/api/online/${_user!.id}', data: {'status': status});
+
+    // List<dynamic> data = {'dl':2};
+    print(res.data);
+    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
+
+    return res.data;
   }
 }

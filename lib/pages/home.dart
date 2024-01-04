@@ -19,7 +19,7 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: Text("Eduflex"),
         centerTitle: true,
-        actions: [profilepic()],
+        actions: [profilepic(context)],
       ),
       drawer: MyDrawer(),
       body: Column(

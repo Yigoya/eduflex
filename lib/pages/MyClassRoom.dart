@@ -36,7 +36,7 @@ class _MyClassRoomState extends State<MyClassRoom> {
       appBar: AppBar(
         title: Text("Class Room"),
         centerTitle: true,
-        actions: [profilepic()],
+        actions: [profilepic(context)],
       ),
       drawer: MyDrawer(),
       body: Container(

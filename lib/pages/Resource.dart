@@ -16,7 +16,7 @@ class _ResourceState extends State<Resource> {
       appBar: AppBar(
         title: Text("Resources"),
         centerTitle: true,
-        actions: [profilepic()],
+        actions: [profilepic(context)],
       ),
       drawer: MyDrawer(),
     );

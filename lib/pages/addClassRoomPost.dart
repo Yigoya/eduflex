@@ -23,7 +23,7 @@ class _AddClassRoomPostState extends State<AddClassRoomPost> {
       appBar: AppBar(
         title: Text("Class Room"),
         centerTitle: true,
-        actions: [profilepic()],
+        actions: [profilepic(context)],
       ),
       drawer: MyDrawer(),
       body: Column(

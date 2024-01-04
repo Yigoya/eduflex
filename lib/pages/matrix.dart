@@ -36,10 +36,11 @@ class _MatrixState extends State<Matrix> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         title: Text("Matrix"),
         centerTitle: true,
-        actions: [profilepic()],
+        actions: [profilepic(context)],
       ),
       drawer: MyDrawer(),
       body: SingleChildScrollView(
@@ -77,10 +78,23 @@ class _MatrixState extends State<Matrix> {
         // MyProvider.loadMatrix();
       },
       child: Container(
+        padding: EdgeInsets.all(10),
+        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            color: Theme.of(context).primaryColorLight),
         child: Column(
           children: [
-            Text(text),
-            SizedBox(width: 180, child: Image.asset(image))
+            Text(
+              text,
+              style: TextStyle(fontSize: 20),
+            ),
+            ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  image,
+                  fit: BoxFit.contain,
+                ))
           ],
         ),
       ),

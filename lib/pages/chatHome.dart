@@ -1,7 +1,10 @@
+import 'package:eduflex/components/auth.dart';
+import 'package:eduflex/components/chatMessage.dart';
 import 'package:eduflex/provider.dart';
 import 'package:eduflex/service/schema/user.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,19 +32,24 @@ import 'dart:convert';
 class ChatScreen extends StatefulWidget {
   final Map<String, dynamic> data;
   final bool isNew;
-  const ChatScreen({super.key, required this.data, this.isNew = false});
+  final String roomid;
+  const ChatScreen(
+      {super.key,
+      required this.data,
+      this.isNew = false,
+      required this.roomid});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  bool _userScrolling = false;
   List<dynamic> _message = [];
-  String? _roomid;
   User? _user;
   final TextEditingController _controller = TextEditingController();
-  WebSocketChannel channel =
-      IOWebSocketChannel.connect('ws://192.168.12.1:8000/ws/server/w');
+  late WebSocketChannel channel = IOWebSocketChannel.connect(
+      '${MyProvider.wsserver}/ws/server/${widget.roomid}');
   final ScrollController _scrollController = ScrollController();
   @override
   void initState() {
@@ -49,6 +57,20 @@ class _ChatScreenState extends State<ChatScreen> {
     print(widget.data);
     getMessage();
     // Listen for incoming messages from the server asynchronously
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    });
+
+    // _scrollController.addListener(() {
+    //   if (_scrollController.position.userScrollDirection ==
+    //       ScrollDirection.forward) {
+    //     // User is scrolling up
+    //     _userScrolling = true;
+    //   } else {
+    //     // User is scrolling down or at the bottom
+    //     _userScrolling = false;
+    //   }
+    // });
 
     channel.stream.listen(
       (message) async {
@@ -61,9 +83,6 @@ class _ChatScreenState extends State<ChatScreen> {
         print('Error in WebSocket: $error');
       },
     );
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
   }
 
   // Simulate an asynchronous message processing function
@@ -77,118 +96,116 @@ class _ChatScreenState extends State<ChatScreen> {
         _message.add(value['msg']);
       });
     }
-    _scrollToBottom();
+    // if (!_userScrolling) {
+    //   // Scroll to bottom only if the user is not currently scrolling
+    //   _scrollToBottom();
+    // }
   }
 
   void getMessage() async {
     User? user = await MyProvider.user();
-    if (widget.isNew) {
-      String roomid = await MyProvider.setStartChat(widget.data['id']);
-      print(roomid);
-      List<dynamic> message = await MyProvider.getMessage(roomid);
-      print(message);
-      setState(() {
-        channel = IOWebSocketChannel.connect(
-            'ws://192.168.12.1:8000/ws/server/${widget.data['msg']['roomid']}');
-        _roomid = roomid;
-        _message = message;
-        _user = user;
-      });
-    } else {
-      List<dynamic> message =
-          await MyProvider.getMessage(widget.data['msg']['roomid']);
-      setState(() {
-        channel = IOWebSocketChannel.connect(
-            'ws://192.168.12.1:8000/ws/server/${widget.data['msg']['roomid']}');
-        _roomid = widget.data['msg']['roomid'];
-        _message = message;
-        _user = user;
-      });
-    }
+
+    List<dynamic> message = await MyProvider.getMessage(widget.roomid);
+    setState(() {
+      _message = message;
+      _user = user;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).canvasColor,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text('WebSocket Chat'),
-      ),
-      body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery.of(context).size.height,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                  height: MediaQuery.of(context).size.height - 150,
-                  child: ListView.builder(
-                    dragStartBehavior: DragStartBehavior.down,
-                    controller: _scrollController,
-                    itemCount: _message.length == 0 ? 1 : _message.length,
-                    itemBuilder: (context, i) {
-                      if (_message.length == 0) {
-                        return Text('start chat');
-                      }
-                      _scrollToBottom();
-                      bool isUser = _message[i]['sender'] == _user!.id;
-                      return Container(
-                        margin: EdgeInsets.all(10),
-                        padding: EdgeInsets.all(10),
-                        alignment: isUser
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(10),
-                              topRight: Radius.circular(10),
-                              bottomLeft: isUser
-                                  ? Radius.circular(10)
-                                  : Radius.circular(0),
-                              bottomRight: isUser
-                                  ? Radius.circular(0)
-                                  : Radius.circular(10),
-                            ),
-                            border: Border.all(
-                                color: isUser ? Colors.blue : Colors.brown)),
-                        child: Text('${_message[i]['body']}'),
-                      );
-                    },
-                  )),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your message...',
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.send),
-                    onPressed: () {
-                      final message = _controller.text;
-                      if (message.isNotEmpty) {
-                        Map<String, dynamic> data = {
-                          'body': message,
-                          'sender': _user!.id,
-                          'receiver': widget.data['id'],
-                          'roomid': _roomid
-                        };
-                        print(data);
-                        // context.read<ChatBloc>().addMessage(data['body']);
-                        channel.sink.add(jsonEncode(data));
-                        _controller.clear();
-                        _scrollToBottom();
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
+        title: Row(
+          children: [
+            userProfilepPic(
+              context,
+              widget.isNew
+                  ? widget.data['avatar']
+                  : widget.data['user']['avatar'],
+              widget.isNew ? widget.data['name'] : widget.data['user']['name'],
+              widget.isNew
+                  ? widget.data['isOnline']
+                  : widget.data['user']['isOnline'],
+            ),
+            Text(widget.isNew
+                ? widget.data['name']
+                : widget.data['user']['name'])
+          ],
         ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: _message.length == 0 ? 1 : _message.length,
+              itemBuilder: (context, i) {
+                if (_message.length == 0) {
+                  return Center(child: Text('Start chat'));
+                }
+                WidgetsBinding.instance!.addPostFrameCallback((_) {
+                  _scrollController
+                      .jumpTo(_scrollController.position.maxScrollExtent);
+                });
+                bool isUser = _message[i]['sender'] == _user!.id;
+                Map<String, dynamic> data = _message[i] as Map<String, dynamic>;
+                return Message(data: data, isUser: isUser);
+              },
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration:
+                BoxDecoration(color: Theme.of(context).primaryColorLight),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    onChanged: (value) {
+                      // if (_controller.text == '') {
+                      setState(() {});
+                      // }
+                    },
+                    controller: _controller,
+                    decoration: InputDecoration(
+                        hintText: 'Enter your message...',
+                        border: InputBorder.none),
+                  ),
+                ),
+                (_controller.text != '')
+                    ? IconButton(
+                        icon: Icon(Icons.send),
+                        onPressed: () {
+                          final message = _controller.text;
+                          if (message.isNotEmpty) {
+                            Map<String, dynamic> data = {
+                              'body': message,
+                              'sender': _user!.id,
+                              'receiver': widget.isNew
+                                  ? widget.data['id']
+                                  : widget.data['user']['id'],
+                              'roomid': widget.roomid
+                            };
+                            print(data);
+                            channel.sink.add(jsonEncode(data));
+                            _controller.clear();
+                            _scrollToBottom();
+                          }
+                        },
+                      )
+                    : IconButton(
+                        icon: Icon(Icons.attach_file),
+                        onPressed: () {
+                          _scrollToBottom();
+                        },
+                      ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

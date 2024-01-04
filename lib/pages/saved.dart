@@ -16,7 +16,7 @@ class _SavedState extends State<Saved> {
       appBar: AppBar(
         title: Text("Saved"),
         centerTitle: true,
-        actions: [profilepic()],
+        actions: [profilepic(context)],
       ),
       drawer: MyDrawer(),
     );

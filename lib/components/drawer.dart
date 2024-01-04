@@ -5,7 +5,9 @@ import 'package:eduflex/pages/Resource.dart';
 import 'package:eduflex/pages/home.dart';
 import 'package:eduflex/pages/matrix.dart';
 import 'package:eduflex/provider.dart';
+import 'package:eduflex/state/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MyDrawer extends StatefulWidget {
   const MyDrawer({super.key});
@@ -134,6 +136,8 @@ class _MyDrawerState extends State<MyDrawer> {
                   onChanged: (value) {
                     setState(() {
                       _value = value;
+                      Provider.of<ThemeChanger>(context, listen: false)
+                          .toggleTheme();
                     });
                   })
             ],

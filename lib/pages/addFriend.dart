@@ -1,3 +1,4 @@
+import 'package:eduflex/components/UserProfile.dart';
 import 'package:eduflex/components/auth.dart';
 import 'package:eduflex/components/drawer.dart';
 import 'package:eduflex/pages/friends.dart';
@@ -32,9 +33,9 @@ class _AddFriendsState extends State<AddFriends> {
     return Container(
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Class Room"),
+          title: Text("Find Friend"),
           centerTitle: true,
-          actions: [profilepic()],
+          actions: [profilepic(context)],
         ),
         drawer: MyDrawer(),
         body: Container(
@@ -51,8 +52,11 @@ class _AddFriendsState extends State<AddFriends> {
                         MaterialPageRoute(builder: (context) => Friends()));
                   },
                   child: Container(
-                      margin: EdgeInsets.all(30),
-                      child: Text('${_friends['name']}'))),
+                    margin: EdgeInsets.all(30),
+                    child: _friends['name'] != null
+                        ? UserProfile(data: _friends)
+                        : Text('search for friend'),
+                  ))
             ],
           ),
         ),

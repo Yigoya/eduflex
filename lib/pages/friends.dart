@@ -1,3 +1,4 @@
+import 'package:eduflex/components/UserProfile.dart';
 import 'package:eduflex/components/auth.dart';
 import 'package:eduflex/components/drawer.dart';
 import 'package:eduflex/pages/addFriend.dart';
@@ -13,8 +14,6 @@ class Friends extends StatefulWidget {
 }
 
 class _FriendsState extends State<Friends> {
-  List<dynamic> _friends = [];
-
   @override
   void initState() {
     super.initState();
@@ -22,56 +21,66 @@ class _FriendsState extends State<Friends> {
   }
 
   void getFriend() async {
-    List<dynamic> friends = await MyProvider.getFriend();
-    setState(() {
-      _friends = friends;
-    });
+    // List<dynamic> friends = await ;
+    // setState(() {
+    //   _friends = friends;
+    // });
   }
 
   Widget build(BuildContext context) {
     return Container(
       child: Scaffold(
+        backgroundColor: Theme.of(context).canvasColor,
         appBar: AppBar(
-          title: Text("Class Room"),
+          title: Text("Friends"),
           centerTitle: true,
-          actions: [profilepic()],
+          actions: [profilepic(context)],
         ),
         drawer: MyDrawer(),
         body: Container(
           child: Column(
             children: [
-              Expanded(
-                child: ListView.builder(
-                    itemCount: _friends.length == 0 ? 1 : _friends.length,
-                    itemBuilder: (context, i) {
-                      if (_friends.length != 0) {
-                        Map<String, dynamic> data =
-                            _friends[i] as Map<String, dynamic>;
-                        print(data);
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => ChatScreen(
-                                          data: data,
-                                          isNew: true,
-                                        )));
-                          },
-                          child: Container(
-                            margin: EdgeInsets.all(30),
-                            child: Column(
-                              children: [
-                                Text('${data['name']}'),
-                              ],
-                            ),
-                          ),
-                        );
-                      } else {
-                        return Text("add friend");
-                      }
-                    }),
-              ),
+              FutureBuilder(
+                  future: MyProvider.getFriend(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      // While waiting for the Future to complete
+                      return CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      // If there is an error
+                      return Text('Error: ${snapshot.error}');
+                    } else {
+                      List<dynamic> _friends = snapshot.data!;
+                      return Expanded(
+                        child: ListView.builder(
+                            itemCount:
+                                _friends.length == 0 ? 1 : _friends.length,
+                            itemBuilder: (context, i) {
+                              if (_friends.length != 0) {
+                                Map<String, dynamic> data =
+                                    _friends[i] as Map<String, dynamic>;
+                                print(data);
+                                return GestureDetector(
+                                    onTap: () async {
+                                      String roomid =
+                                          await MyProvider.setStartChat(
+                                              data['id']);
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => ChatScreen(
+                                                  data: data,
+                                                  isNew: true,
+                                                  roomid: roomid)));
+                                    },
+                                    child: UserProfile(data: data));
+                              } else {
+                                return Text("add friend");
+                              }
+                            }),
+                      );
+                    }
+                  })
             ],
           ),
         ),

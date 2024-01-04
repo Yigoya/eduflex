@@ -25,10 +25,11 @@ class _QuePageState extends State<QuePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         title: Text("Matrix"),
         centerTitle: true,
-        actions: [profilepic()],
+        actions: [profilepic(context)],
       ),
       drawer: MyDrawer(),
       body: Column(
@@ -59,27 +60,51 @@ class _QuePageState extends State<QuePage> {
         context: context,
         builder: (context) {
           return Dialog(
+            backgroundColor: Theme.of(context).canvasColor,
             insetPadding: EdgeInsets.symmetric(horizontal: 20),
             child: Container(
               child: Column(
                 children: [
-                  Text("Answers for the question"),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Text(
+                    "Answers for the question",
+                    style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
                   Expanded(
                     child: ListView.builder(
                         itemCount: widget.ques.length,
                         itemBuilder: (context, index) {
                           return Container(
+                              margin: EdgeInsets.all(5),
+                              padding: EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.black87)),
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Theme.of(context).primaryColorLight),
                               child: Column(
                                 children: [
-                                  Text(widget.ques[index]['question']),
+                                  Text(
+                                    widget.ques[index]['question'],
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Container(
+                                        padding: EdgeInsets.all(5),
                                         decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                             color: answer[index + 1] !=
                                                     widget.ques[index]['answer']
                                                 ? Colors.red
@@ -90,8 +115,11 @@ class _QuePageState extends State<QuePage> {
                                         ),
                                       ),
                                       Container(
-                                        decoration:
-                                            BoxDecoration(color: Colors.green),
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Colors.green),
                                         child: Text(
                                           'Answer: (${widget.ques[index]['answer']}) ${widget.ques[index][widget.ques[index]['answer']]}',
                                           style: TextStyle(color: Colors.white),
@@ -99,7 +127,15 @@ class _QuePageState extends State<QuePage> {
                                       ),
                                     ],
                                   ),
-                                  Text(widget.ques[index]['explain'])
+                                  Container(
+                                      margin: EdgeInsets.only(top: 20),
+                                      padding: EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          color: Colors.green.shade50),
+                                      child:
+                                          Text(widget.ques[index]['explain']))
                                 ],
                               ));
                         }),
