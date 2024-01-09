@@ -41,7 +41,7 @@ class _AddFriendsState extends State<AddFriends> {
         body: Container(
           child: Column(
             children: [
-              textfield(controller, 'search by email'),
+              textfield(controller, 'search by user name'),
               button(() async {
                 await getFriend();
               }, "search"),

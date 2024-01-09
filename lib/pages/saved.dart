@@ -20,6 +20,5 @@ class _SavedState extends State<Saved> {
       ),
       drawer: MyDrawer(),
     );
-    ;
   }
 }

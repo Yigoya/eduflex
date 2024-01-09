@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 ThemeData lightTheme = ThemeData(
-  primaryColor: Color.fromARGB(255, 121, 241, 175),
+  primaryColor: Color.fromARGB(255, 155, 148, 255),
   primaryColorLight: Colors.white,
   primaryColorDark: Colors.black,
   cardColor: Colors.black.withOpacity(0.5),
@@ -10,8 +10,13 @@ ThemeData lightTheme = ThemeData(
 );
 
 ThemeData darkTheme = ThemeData(
-    primaryColor: Colors.black.withOpacity(0.2),
-    colorScheme: ColorScheme.dark());
+  primaryColor: Color.fromARGB(255, 25, 85, 52),
+  primaryColorLight: Colors.black,
+  primaryColorDark: Colors.white,
+  cardColor: Colors.white.withOpacity(0.5),
+  canvasColor: const Color.fromARGB(255, 71, 70, 70),
+  colorScheme: ColorScheme.dark(),
+);
 
 class ThemeChanger extends ChangeNotifier {
   ThemeData _currentTheme = lightTheme;

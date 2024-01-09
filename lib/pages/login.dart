@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   height: 20,
                 ),
-                textfield(_passwordcontroller, 'email or username'),
+                textfield(_passwordcontroller, 'password', isPass: true),
                 SizedBox(
                   height: 30,
                 ),

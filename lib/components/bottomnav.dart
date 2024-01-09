@@ -36,12 +36,12 @@ class _DashBoardState extends State<DashBoard> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
-      MyProvider.setActiveStatus(true);
+      await MyProvider.setActiveStatus(true);
       print("am online");
     } else {
-      MyProvider.setActiveStatus(false);
+      await MyProvider.setActiveStatus(false);
       print("am not online");
     }
   }

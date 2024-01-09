@@ -34,7 +34,7 @@ class _RegisterState extends State<Register> {
   bool wrong = false;
   bool isnotfill = false;
   bool next() {
-    if (!isUsed!) {
+    if (isUsed!) {
       return false;
     }
     if (_emailcontroller.text != '' &&
@@ -129,14 +129,21 @@ class _RegisterState extends State<Register> {
                       )
                     : Container(),
                 textfield(_fullnamecontroller, 'Full Name'),
-                TextField(
-                  onChanged: onChange,
-                  style: TextStyle(
-                    fontSize: 20,
+                Container(
+                  margin: EdgeInsets.only(left: 40, right: 40, top: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Theme.of(context).cardColor)),
+                  child: TextField(
+                    onChanged: onChange,
+                    style: TextStyle(
+                      fontSize: 20,
+                    ),
+                    controller: _usernamecontroller,
+                    decoration: InputDecoration(
+                        hintText: "set username", border: InputBorder.none),
                   ),
-                  controller: _usernamecontroller,
-                  decoration: InputDecoration(
-                      hintText: "set username", border: InputBorder.none),
                 ),
                 isUsed != null
                     ? Container(
@@ -156,11 +163,12 @@ class _RegisterState extends State<Register> {
                 SizedBox(
                   height: 20,
                 ),
-                textfield(_passwordcontroller, 'password'),
+                textfield(_passwordcontroller, 'password', isPass: true),
                 SizedBox(
                   height: 20,
                 ),
-                textfield(_confimpasswordcontroller, 'confirm password'),
+                textfield(_confimpasswordcontroller, 'confirm password',
+                    isPass: true),
                 SizedBox(
                   height: 20,
                 ),

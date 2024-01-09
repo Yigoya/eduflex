@@ -1,7 +1,11 @@
 import 'package:eduflex/auth/auth_gete.dart';
+import 'package:eduflex/firebase_options.dart';
 import 'package:eduflex/pages/chatHome.dart';
+import 'package:eduflex/pages/notifcation_page.dart';
 import 'package:eduflex/service/dbservice.dart';
+import 'package:eduflex/service/firebase_api.dart';
 import 'package:eduflex/state/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -13,9 +17,13 @@ void main() async {
   //   child: MyApp(),
   // ));
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FirebaseApi().initNotification();
   await dBservice.database;
   runApp(MyApp());
 }
+
+final navgatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -27,9 +35,12 @@ class MyApp extends StatelessWidget {
         create: (context) => ThemeChanger(),
         builder: (context, _) {
           return MaterialApp(
+            debugShowCheckedModeBanner: false,
             title: 'Flutter Demo',
             theme: Provider.of<ThemeChanger>(context).theme,
             home: AuthGate(),
+            navigatorKey: navgatorKey,
+            routes: {'/notification': (context) => const Notifi()},
           );
         });
   }

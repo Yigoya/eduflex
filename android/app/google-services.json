@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "835821485602",
+    "project_id": "chatapp-7d30d",
+    "storage_bucket": "chatapp-7d30d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:835821485602:android:e11b56e05464cbac24947b",
+        "android_client_info": {
+          "package_name": "com.example.eduflex"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "835821485602-cmbgn9sbqf7fck2598nobouhpbuc0otl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCny2jm9WsQ7CzkmKJC0uMOn-ejWvOc_Ao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "835821485602-cmbgn9sbqf7fck2598nobouhpbuc0otl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

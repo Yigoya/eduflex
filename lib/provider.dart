@@ -30,13 +30,19 @@ class MyProvider {
     await prefs.remove('user');
   }
 
-  static String server = 'http://192.168.12.1:8000';
-  static String wsserver = 'ws://192.168.12.1:8000';
+  static String server = 'http://192.168.254.17:8000';
+  static String wsserver = 'ws://192.168.254.17:8000';
 
   static Future<void> singin(
       String email, String password, BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String token = await prefs.getString('token')!;
     Dio dio = Dio();
-    Map<String, dynamic> data = {"email": email, "password": password};
+    Map<String, dynamic> data = {
+      "email": email,
+      "password": password,
+      'token': token
+    };
     try {
       // Make a GET request to a URL
       Response response =
@@ -45,6 +51,7 @@ class MyProvider {
       await MyProvider.setUser(User.fromMap(response.data));
       User? user = await MyProvider.user();
       print(user!.name);
+
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => AuthGate()),
@@ -108,16 +115,16 @@ class MyProvider {
     try {
       Response res =
           await dio.post('${server}/api/createclassroom', data: data);
-      print(res.data);
     } catch (e) {
       print(e);
     }
   }
 
-  static void createClassRoomPost(
-      String? tasktype, int classroom, String title, String text) async {
+  static void createClassRoomPost(String? tasktype, int classroom, String title,
+      String text, String filetype, String? filePath) async {
     Dio dio = Dio();
     User? _user = await user();
+    print('path in provider: $filePath');
     Map<String, dynamic> data = {
       "author": _user!.id,
       "classroom": classroom,
@@ -125,10 +132,15 @@ class MyProvider {
       'text': text,
       'tasktype': tasktype
     };
+    if (filePath != null) {
+      data[filetype] =
+          await MultipartFile.fromFile(filePath, filename: basename(filePath));
+    }
+
+    FormData formData = FormData.fromMap(data);
     try {
       Response res = await dio.post('${server}/api/postclassroom/${_user!.id}',
-          data: data);
-      print(res.data);
+          data: formData);
     } catch (e) {
       print(e);
     }
@@ -144,27 +156,45 @@ class MyProvider {
     return data;
   }
 
-  static void joinClassRoom(int classroom, String student) async {
+  static Future<bool> joinClassRoom(int classroom) async {
     Dio dio = Dio();
     User? _user = await user();
-    Map<String, dynamic> data = {"classroom": classroom, "student": student};
+    Map<String, dynamic> data = {"classroom": classroom, "student": _user!.id};
     try {
       Response res = await dio.post('${server}/api/joinclassroom', data: data);
-      print(res.data);
+
+      if (res.data['isExist'] == null) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (e) {
-      print(e);
+      return false;
     }
   }
 
-  static Future<Map<String, dynamic>> getUser(String email) async {
+  static Future<bool> joinGroup(String groupid) async {
+    Dio dio = Dio();
+    User? _user = await user();
+    Map<String, dynamic> data = {"group": groupid, "user": _user!.id};
+    try {
+      Response res = await dio.post('${server}/api/joingroup', data: data);
+
+      if (res.data['isExist'] == null) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>> getUser(String name) async {
     User? _user = await user();
     Dio dio = Dio();
     Response res =
-        await dio.get('${server}/api/student/${_user!.id}?email=$email');
-
-    // List<dynamic> data = {'dl':2};
-    print(res.data);
-    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
+        await dio.get('${server}/api/student/${_user!.id}?name=$name');
 
     return res.data;
   }
@@ -175,10 +205,6 @@ class MyProvider {
     print("object");
     Response res = await dio.get('${server}/api/getstudent/${_user!.id}');
 
-    // List<dynamic> data = {'dl':2};
-    print(res.data);
-    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
-
     return res.data;
   }
 
@@ -186,10 +212,6 @@ class MyProvider {
     User? _user = await user();
     Dio dio = Dio();
     Response res = await dio.get('${server}/api/friend/${_user!.id}');
-
-    // List<dynamic> data = {'dl':2};
-    print(res.data);
-    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
 
     return res.data;
   }
@@ -199,9 +221,13 @@ class MyProvider {
     Dio dio = Dio();
     Response res = await dio.get('${server}/api/message/$roomid');
 
-    // List<dynamic> data = {'dl':2};
-    print(res.data);
-    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
+    return res.data;
+  }
+
+  static Future<List<dynamic>> getGroupMessage(String roomid) async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res = await dio.get('${server}/api/mygroup/$roomid');
 
     return res.data;
   }
@@ -215,7 +241,6 @@ class MyProvider {
     try {
       Response res =
           await dio.post('${server}/api/friend/${_user!.id}', data: data);
-      print(res.data);
     } catch (e) {
       print(e);
     }
@@ -226,9 +251,13 @@ class MyProvider {
     Dio dio = Dio();
     Response res = await dio.get('${server}/api/mymessage/${_user!.id}');
 
-    // List<dynamic> data = {'dl':2};
-    print(res.data);
-    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
+    return res.data;
+  }
+
+  static Future<List<dynamic>> getGroupChat() async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res = await dio.get('${server}/api/group/${_user!.id}');
 
     return res.data;
   }
@@ -252,6 +281,21 @@ class MyProvider {
     }
   }
 
+  static Future<String> createGroup(String name, String idname) async {
+    Dio dio = Dio();
+    User? _user = await user();
+
+    Map data = {'creator': _user!.id, 'name': name, 'idname': idname};
+    try {
+      Response res =
+          await dio.post('${server}/api/group/${_user!.id}', data: data);
+      return idname;
+    } catch (e) {
+      print(e);
+      return 'n';
+    }
+  }
+
   static Future<void> setProfilePic(String filePath) async {
     User? _user = await user();
     Dio dio = Dio();
@@ -259,12 +303,11 @@ class MyProvider {
 
     data['avatar'] =
         await MultipartFile.fromFile(filePath, filename: basename(filePath));
-    print(data);
+    print('CHECK: $data');
     FormData formData = FormData.fromMap(data);
     try {
-      Response res =
-          await dio.put('${server}/api/student/${_user!.id}', data: formData);
-      print(res.data);
+      Response res = await dio.put('${server}/api/setprofile/${_user!.id}',
+          data: formData);
     } catch (e) {
       print("Error $e");
     }
@@ -284,9 +327,39 @@ class MyProvider {
     Response res = await dio
         .post('${server}/api/online/${_user!.id}', data: {'status': status});
 
-    // List<dynamic> data = {'dl':2};
-    print(res.data);
-    // Response res2 = await dio.get('${server}/api/student/${_user!.id}');
+    return res.data;
+  }
+
+  static Future<void> setClassRoomSeen(int id) async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res =
+        await dio.get('${server}/api/classroomseen/$id?id=${_user!.id}');
+
+    return res.data;
+  }
+
+  static Future<List<dynamic>> getUnseen(String roomid) async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res =
+        await dio.get('${server}/api/chatseen/$roomid?id=${_user!.id}');
+
+    return res.data;
+  }
+
+  static Future<void> setChatSeen(int id) async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res = await dio.post('${server}/api/chatseen/$id?id=${_user!.id}');
+
+    return res.data;
+  }
+
+  static Future<List<dynamic>> getNotification() async {
+    User? _user = await user();
+    Dio dio = Dio();
+    Response res = await dio.get('${server}/api/notification/${_user!.id}');
 
     return res.data;
   }

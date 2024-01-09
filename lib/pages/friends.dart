@@ -75,7 +75,9 @@ class _FriendsState extends State<Friends> {
                                     },
                                     child: UserProfile(data: data));
                               } else {
-                                return Text("add friend");
+                                return SizedBox(
+                                    height: 300,
+                                    child: Center(child: Text("add friend")));
                               }
                             }),
                       );

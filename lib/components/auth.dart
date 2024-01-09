@@ -4,13 +4,15 @@ import 'package:eduflex/pages/profile.dart';
 import 'package:eduflex/provider.dart';
 import 'package:flutter/material.dart';
 
-Widget textfield(TextEditingController controller, String text) {
+Widget textfield(TextEditingController controller, String text,
+    {bool isPass = false}) {
   return Container(
     margin: EdgeInsets.symmetric(horizontal: 40),
     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 7),
     decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20), color: Colors.white),
     child: TextField(
+      obscureText: isPass,
       style: TextStyle(
         fontSize: 20,
       ),
@@ -105,9 +107,9 @@ Widget profilepic(BuildContext context) {
 }
 
 Widget userProfilepPic(
-    BuildContext context, String? url, String name, bool stutas) {
+    BuildContext context, String? url, String name, bool? status) {
   return Container(
-      margin: EdgeInsets.only(right: 20),
+      margin: EdgeInsets.only(right: 8),
       child: Stack(children: [
         ClipOval(
             child: url == null
@@ -136,7 +138,9 @@ Widget userProfilepPic(
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                     color: Theme.of(context).primaryColorLight, width: 1.5),
-                color: stutas ? Colors.green : Colors.grey[400]),
+                color: (status != null && status)
+                    ? Colors.green
+                    : Colors.grey[400]),
             width: 15,
             height: 15,
           ),

@@ -1,5 +1,7 @@
+import 'package:eduflex/components/UserProfile.dart';
 import 'package:eduflex/components/auth.dart';
 import 'package:eduflex/components/chatMessage.dart';
+import 'package:eduflex/components/groupChatMessage.dart';
 import 'package:eduflex/provider.dart';
 import 'package:eduflex/service/schema/user.dart';
 import 'package:flutter/gestures.dart';
@@ -29,35 +31,36 @@ import 'dart:convert';
 //   }
 // }
 
-class ChatScreen extends StatefulWidget {
+class GroupChatScreen extends StatefulWidget {
   final Map<String, dynamic> data;
   final bool isNew;
   final String roomid;
-  const ChatScreen(
+  const GroupChatScreen(
       {super.key,
       required this.data,
       this.isNew = false,
       required this.roomid});
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  _GroupChatScreenState createState() => _GroupChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _GroupChatScreenState extends State<GroupChatScreen> {
   bool _userScrolling = false;
   List<dynamic> _message = [];
   User? _user;
   final TextEditingController _controller = TextEditingController();
   late WebSocketChannel channel = IOWebSocketChannel.connect(
-      '${MyProvider.wsserver}/ws/server/${widget.roomid}');
+      '${MyProvider.wsserver}/ws/server/group/${widget.roomid}');
   final ScrollController _scrollController = ScrollController();
+  late Map<String, dynamic> _SignedUser;
   @override
   void initState() {
     super.initState();
     print(widget.data);
     getMessage();
     // Listen for incoming messages from the server asynchronously
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     });
 
@@ -83,9 +86,6 @@ class _ChatScreenState extends State<ChatScreen> {
         print('Error in WebSocket: $error');
       },
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
   }
 
   // Simulate an asynchronous message processing function
@@ -107,11 +107,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void getMessage() async {
     User? user = await MyProvider.user();
-
-    List<dynamic> message = await MyProvider.getMessage(widget.roomid);
+    Map<String, dynamic> SignedUser = await MyProvider.getSignedUser();
+    List<dynamic> message = await MyProvider.getGroupMessage(widget.roomid);
     setState(() {
       _message = message;
       _user = user;
+      _SignedUser = SignedUser;
     });
   }
 
@@ -120,25 +121,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).canvasColor,
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            userProfilepPic(
-              context,
-              widget.isNew
-                  ? widget.data['avatar']
-                  : widget.data['user']['avatar'],
-              widget.isNew ? widget.data['name'] : widget.data['user']['name'],
-              widget.isNew
-                  ? widget.data['isOnline']
-                  : widget.data['user']['isOnline'],
-            ),
-            Text(widget.isNew
-                ? widget.data['name']
-                : widget.data['user']['name'])
-          ],
-        ),
-      ),
+      appBar: AppBar(title: UserProfile(data: widget.data)),
       body: Column(
         children: [
           Expanded(
@@ -149,13 +132,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (_message.length == 0) {
                   return Center(child: Text('Start chat'));
                 }
-                WidgetsBinding.instance.addPostFrameCallback((_) {
+                WidgetsBinding.instance!.addPostFrameCallback((_) {
                   _scrollController
                       .jumpTo(_scrollController.position.maxScrollExtent);
                 });
-                bool isUser = _message[i]['sender'] == _user!.id;
+                bool isUser = _message[i]['msg']['sender'] == _user!.id;
+                print(_message[i]['msg']['sender']);
                 Map<String, dynamic> data = _message[i] as Map<String, dynamic>;
-                return Message(data: data, isUser: isUser);
+                return GroupMessage(data: data, isUser: isUser);
               },
             ),
           ),
@@ -185,12 +169,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           final message = _controller.text;
                           if (message.isNotEmpty) {
                             Map<String, dynamic> data = {
-                              'body': message,
-                              'sender': _user!.id,
-                              'receiver': widget.isNew
-                                  ? widget.data['id']
-                                  : widget.data['user']['id'],
-                              'roomid': widget.roomid
+                              'msg': {
+                                'body': message,
+                                'sender': _user!.id,
+                                'roomid': widget.roomid
+                              },
+                              'user': _SignedUser
                             };
                             print(data);
                             channel.sink.add(jsonEncode(data));
@@ -214,7 +198,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent + 70,
